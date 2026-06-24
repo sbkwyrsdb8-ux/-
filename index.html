@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор времени</title>
+<style>
+body{
+background:#000;
+color:#fff;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+max-width:700px;
+margin:auto;
+padding:20px;
+}
+.card{
+background:#111;
+border:1px solid #333;
+border-radius:20px;
+padding:20px;
+}
+h1{
+text-align:center;
+margin-bottom:20px;
+}
+.now{
+text-align:center;
+font-size:22px;
+margin-bottom:20px;
+color:#ccc;
+}
+.label{
+margin-top:15px;
+margin-bottom:5px;
+color:#aaa;
+}
+input{
+width:100%;
+padding:14px;
+font-size:18px;
+border-radius:12px;
+border:1px solid #444;
+background:#1c1c1e;
+color:#fff;
+box-sizing:border-box;
+}
+button{
+width:100%;
+padding:16px;
+margin-top:12px;
+font-size:20px;
+font-weight:bold;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:12px;
+cursor:pointer;
+}
+.result{
+margin-top:25px;
+background:#1c1c1e;
+border-radius:16px;
+padding:20px;
+text-align:center;
+}
+.result-time{
+font-size:60px;
+font-weight:bold;
+}
+.result-date{
+margin-top:10px;
+font-size:18px;
+color:#aaa;
+}
+.history{
+margin-top:30px;
+}
+.history-item{
+background:#1c1c1e;
+padding:12px;
+border-radius:12px;
+margin-bottom:10px;
+line-height:1.6;
+}
+.small{
+font-size:14px;
+color:#aaa;
+}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>⏰ Калькулятор времени</h1>
+<div class="now">
+Текущее время: <span id="live"></span>
+</div>
+<div class="label">Время начала</div>
+<input type="time" id="startTime">
+<div class="label">Добавить часов</div>
+<input type="number" id="hours" value="8">
+<div class="label">Добавить минут</div>
+<input type="number" id="minutes" value="0">
+
++8 часов
+
+Рассчитать
+
+<div class="result">
+<div class="result-time" id="resultTime">--:--</div>
+<div class="result-date" id="resultDate"></div>
+</div>
+<div class="history">
+<h2>Последние 10 расчетов</h2>
+<div id="historyList"></div>
+</div>
+</div>
+<script>
+function pad(n){
+return String(n).padStart(2,"0");
+}
+function updateClock(){
+const now=new Date();
+document.getElementById("live").textContent=
+pad(now.getHours()) + ":" +
+pad(now.getMinutes()) + ":" +
+pad(now.getSeconds());
+const startInput=
+document.getElementById("startTime");
+if(!startInput.dataset.userEdited){
+startInput.value=
+pad(now.getHours()) + ":" +
+pad(now.getMinutes());
+}
+}
+setInterval(updateClock,1000);
+updateClock();
+document
+.getElementById("startTime")
+.addEventListener("change",function(){
+this.dataset.userEdited="true";
+});
+function addEight(){
+const input=
+document.getElementById("hours");
+input.value=
+parseInt(input.value || 0) + 8;
+}
+function calculate(){
+const start=
+document.getElementById("startTime").value;
+if(!start){
+return;
+}
+const parts=start.split(":");
+const h=parseInt(parts[0]);
+const m=parseInt(parts[1]);
+const addHours=
+parseInt(
+document.getElementById("hours").value || 0
+);
+const addMinutes=
+parseInt(
+document.getElementById("minutes").value || 0
+);
+const startDate=new Date();
+startDate.setHours(h);
+startDate.setMinutes(m);
+startDate.setSeconds(0);
+const resultDate=
+new Date(startDate);
+resultDate.setHours(
+resultDate.getHours()+addHours
+);
+resultDate.setMinutes(
+resultDate.getMinutes()+addMinutes
+);
+document.getElementById("resultTime").textContent=
+pad(resultDate.getHours()) +
+":" +
+pad(resultDate.getMinutes());
+document.getElementById("resultDate").textContent=
+resultDate.toLocaleDateString("ru-RU");
+saveHistory(
+startDate,
+addHours,
+addMinutes,
+resultDate
+);
+}
+function saveHistory(start,hours,minutes,result){
+let history=
+JSON.parse(
+localStorage.getItem("timeHistory") || "[]"
+);
+history.unshift({
+start:
+start.toLocaleDateString("ru-RU")
++" "+
+start.toLocaleTimeString("ru-RU"),
+hours:hours,
+minutes:minutes,
+result:
+result.toLocaleDateString("ru-RU")
++" "+
+result.toLocaleTimeString("ru-RU")
+});
+history=history.slice(0,10);
+localStorage.setItem(
+"timeHistory",
+JSON.stringify(history)
+);
+renderHistory();
+}
+function renderHistory(){
+const history=
+JSON.parse(
+localStorage.getItem("timeHistory") || "[]"
+);
+const container=
+document.getElementById("historyList");
+container.innerHTML="";
+history.forEach(item=>{
+const div=
+document.createElement("div");
+div.className="history-item";
+div.innerHTML=
+`
+<div><b>Начало:</b> ${item.start}</div>
+<div><b>Добавлено:</b> ${item.hours} ч ${item.minutes} мин</div>
+<div><b>Результат:</b> ${item.result}</div>
+`;
+container.appendChild(div);
+});
+}
+renderHistory();
+</script>
+</body>
+</html>
